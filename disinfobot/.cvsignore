@@ -1,0 +1,10 @@
+_dist
+db
+olddb
+backup.db
+infobot.cfg
+infobot.log
+infobot.db
+infobot.db.backup
+infobot.xml
+googleapi.jar

@@ -1,0 +1,87 @@
+<infobot>
+	<global>
+		<nickname>wikiwiki</nickname>
+		<realname>Java Infobot</realname>
+
+		<!-- These are the flags for users we don't recognise -->
+		<defaultflags>mqgS</defaultflags>
+
+		<!-- If you have a Google key, put it here. -->
+		<googlekey>...</googlekey>
+	</global>
+
+	<users>
+		<!--
+			Possible user flags are:
+
+				a - admin
+				d - allow deleting entries
+				g - allow 'google' and 'spell' commands
+				m - allow creating entries
+				q - allow queries
+				s - allow 'say' command
+				S - allow searching
+				
+			The hostmask is a regexp; ".*" matches any text.
+		-->
+		<user>
+			<nickname>zwitter</nickname>
+			<hostmask>.*!.*kate@.*\.wiki[pm]edia\.org</hostmask>
+			<flags>dasgmqS</flags>
+		</user>
+
+		<user>
+			<nickname>dysprosia</nickname>
+			<hostmask>.*!.*@dysprosia.wikipedia</hostmask>
+			<flags>dmqgS</flags>
+		</user>
+
+		<user>
+			<nickname>Jimbo Wales</nickname>
+			<hostmask>.*!.*@Jimbo-Wales.wikipedia</hostmask>
+			<flags>dmqgS</flags>
+		</user>
+	</users>
+
+	<servers>
+		<server>
+			<name>irc.efnet.nl</name>
+			<port>6667</port>	
+		</server>
+	</servers>
+
+	<channels>
+		<channel>
+			<name>#c++.ops 14882</name>
+		</channel>
+	</channels>
+
+	<handlers>
+		<handler>org.wikimedia.infobot.handlers.AddEntryHandler</handler>
+		<handler>org.wikimedia.infobot.handlers.ForgetHandler</handler>
+		<handler>org.wikimedia.infobot.handlers.JoinPartHandler</handler>
+		<handler>org.wikimedia.infobot.handlers.RehashHandler</handler>
+		<handler>org.wikimedia.infobot.handlers.SearchKeysHandler</handler>
+		<handler>org.wikimedia.infobot.handlers.SearchValsHandler</handler>
+		<handler>org.wikimedia.infobot.handlers.StatusHandler</handler>
+		<handler>org.wikimedia.infobot.handlers.SayHandler</handler>
+		<handler>org.wikimedia.infobot.handlers.WhoamiHandler</handler>
+		<handler>org.wikimedia.infobot.handlers.TimeHandler</handler>
+		<handler>org.wikimedia.infobot.handlers.SeenHandler</handler>
+		<handler>org.wikimedia.infobot.handlers.CalcHandler</handler>
+		<handler>org.wikimedia.infobot.handlers.NormalLookupHandler</handler>
+
+		<!-- Enable these two if you have a Google key. -->
+		<handler>org.wikimedia.infobot.handlers.SpellHandler</handler>
+		<handler>org.wikimedia.infobot.handlers.GoogleHandler</handler>
+
+		<!-- Provides Wikipedia status, probably not useful for most people... -->
+		<handler>org.wikimedia.infobot.handlers.WpSpeedHandler</handler>
+	</handlers>
+
+	<irchandlers>
+		<!-- You probably don't want to disable any of these. -->
+		<irchandler>org.wikimedia.infobot.irchandlers.WelcomeHandler</irchandler>
+		<irchandler>org.wikimedia.infobot.irchandlers.PrivmsgHandler</irchandler>
+	</irchandlers>
+</infobot>
