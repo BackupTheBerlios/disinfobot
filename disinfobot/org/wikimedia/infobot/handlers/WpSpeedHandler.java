@@ -19,14 +19,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * $Id: WpSpeedHandler.java,v 1.1 2004/11/22 18:27:58 kate Exp $
+ * $Id: WpSpeedHandler.java,v 1.2 2004/11/22 20:16:16 kate Exp $
  */
 
 package org.wikimedia.infobot.handlers;
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,10 +42,6 @@ import org.wikimedia.infobot.irc.ServerMessage;
  *
  */
 public class WpSpeedHandler extends Handler {
-
-	/* (non-Javadoc)
-	 * @see infobot.Handler#execute(infobot.ServerMessage, infobot.User, java.lang.String)
-	 */
 	public boolean execute(ServerMessage m, User u, String command) throws IOException {
 		long then = System.currentTimeMillis();
 		Pattern p = Pattern.compile("^(wikipedia|wp) *status *\\?? *$");
@@ -60,6 +59,7 @@ public class WpSpeedHandler extends Handler {
 		String urlstr = "http://en.wikipedia.org/wiki/Main_Page";
 		URL url = new URL(urlstr);
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+		conn.setUseCaches(false);
 		conn.setInstanceFollowRedirects(false);
 		conn.setRequestProperty("User-Agent", 
 				"Wikipedia-Java-Infobot/" + Infobot.version + " (contact: kate.turner@gmail.com)");
@@ -73,7 +73,19 @@ public class WpSpeedHandler extends Handler {
 		}
 		long now = System.currentTimeMillis();
 		double time = (now - (double)then) / 1000.0;
-		m.replyChannel(nick + ", I loaded the Wikipedia main page in " + time + " seconds.");
+		String res = nick + ", I loaded the Wikipedia main page in " + time + " seconds.";
+		p = Pattern.compile("(Served by [^ ]+ in [^ ]+ secs)");
+		DataInputStream dis = new DataInputStream(new BufferedInputStream(conn.getInputStream()));
+		String line;
+		while ((line = dis.readLine()) != null) {
+			mat = p.matcher(line);
+			if (mat.find()) {
+				res += " (" + mat.group(1) + ")";
+				break;
+			}
+		}
+		dis.close();
+		m.replyChannel(res);
 		return true;
 	}
 

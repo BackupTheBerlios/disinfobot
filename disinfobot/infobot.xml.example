@@ -1,5 +1,5 @@
 <!--
- $Id: infobot.xml.example,v 1.3 2004/11/22 18:37:05 kate Exp $
+ $Id: infobot.xml.example,v 1.4 2004/11/22 20:16:16 kate Exp $
   
  This is an example configuration file for disinfobot.
  Copy it to infobot.xml and edit as needed.
@@ -29,25 +29,14 @@
 				q - allow queries
 				s - allow 'say' command
 				S - allow searching
+				p - allow use of 'tell ... privately' command
 				
 			The hostmask is a regexp; ".*" matches any text.
 		-->
 		<user>
 			<nickname>zwitter</nickname>
-			<hostmask>.*!.*kate@.*\.wiki[pm]edia\.org</hostmask>
+			<hostmask>^.*!.*kate@.*\.wiki[pm]edia\.org$</hostmask>
 			<flags>dasgmqS</flags>
-		</user>
-
-		<user>
-			<nickname>dysprosia</nickname>
-			<hostmask>.*!.*@dysprosia.wikipedia</hostmask>
-			<flags>dmqgS</flags>
-		</user>
-
-		<user>
-			<nickname>Jimbo Wales</nickname>
-			<hostmask>.*!.*@Jimbo-Wales.wikipedia</hostmask>
-			<flags>dmqgS</flags>
 		</user>
 	</users>
 

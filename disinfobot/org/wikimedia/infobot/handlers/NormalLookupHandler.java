@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * 
- * $Id: NormalLookupHandler.java,v 1.1 2004/11/22 18:27:58 kate Exp $
+ * $Id: NormalLookupHandler.java,v 1.2 2004/11/22 20:16:16 kate Exp $
  */
 
 package org.wikimedia.infobot.handlers;
@@ -39,7 +39,8 @@ public class NormalLookupHandler extends Handler {
 	}
 	
 	public boolean execute(ServerMessage m, User u, String command) throws IOException {
-		Pattern p = Pattern.compile("^(tell +(.+) +about +)?(raw +)?(.+?) *(\\?|\\.)? *$");
+		Pattern p = Pattern.compile(
+				"^(tell +([^ ]+) +(privately +)?about +)?(raw +)?(.+?) *(\\?|\\.)? *$");
 		Matcher mat = p.matcher(command);
 		
 		if (!mat.find())
@@ -57,7 +58,7 @@ public class NormalLookupHandler extends Handler {
 				target = mat.group(2);
 			indirect = true;
 		}
-		String name = mat.group(4);
+		String name = mat.group(5);
 		if (name.equals("me"))
 			name = nick;
 		Factoid f = Infobot.ds.getItem(name);
@@ -70,26 +71,29 @@ public class NormalLookupHandler extends Handler {
 		f.incQueries();
 		Infobot.ds.storeItem(name, f);
 		String val;
-		boolean raw = (mat.group(3) != null);
+		String reply = m.replyTo;
+		boolean raw = (mat.group(4) != null);
 		if (raw) {
 			val = f.getText();
 			m.replyChannel(nick + ", raw text is: \"" + Factoid.sanitiseName(val) + "\".");
 			return true;
 		}
-		if (mat.group(3) != null)
+		if (mat.group(3) != null && u.hasFlag('p'))
+			reply = target;
+		if (mat.group(4) != null)
 			val = f.getText();
 		else
 			val = f.getTextLinks();
 		if (val.startsWith("<reply>")) {
 			if (indirect)
-				Infobot.currentServer.privmsg(m.replyTo, target + ": " + val.substring(7));
+				Infobot.currentServer.privmsg(reply, target + ": " + val.substring(7));
 			else
-				Infobot.currentServer.privmsg(m.replyTo, val.substring(7));
+				Infobot.currentServer.privmsg(reply, val.substring(7));
 		} else {
 			String replystr = name + " is ";
 			if (target.equals(name))
 				replystr = "you are ";
-			Infobot.currentServer.privmsg(m.replyTo, target + ", " + replystr + val);
+			Infobot.currentServer.privmsg(reply, target + ", " + replystr + val);
 		}
 		return true;
 	}
