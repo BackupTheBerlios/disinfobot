@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * $Id: IRCConnection.java,v 1.1 2004/11/22 18:27:59 kate Exp $
+ * $Id: IRCConnection.java,v 1.2 2004/12/21 11:12:02 kate Exp $
  */
 
 package org.wikimedia.infobot.irc;
@@ -146,7 +146,7 @@ public class IRCConnection {
 	public Server getNextServer() {
 		if (thisServer == null || !thisServer.hasNext())
 			thisServer = servers.iterator();
-		return new Server((String) thisServer.next(), 6667);
+		return (Server)thisServer.next();
 	}
 
 	/**

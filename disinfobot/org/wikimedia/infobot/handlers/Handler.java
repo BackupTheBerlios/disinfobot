@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * 
- * $Id: Handler.java,v 1.1 2004/11/22 18:27:58 kate Exp $
+ * $Id: Handler.java,v 1.2 2004/12/21 11:12:02 kate Exp $
  */
 
 package org.wikimedia.infobot.handlers;
@@ -48,6 +48,9 @@ public abstract class Handler {
 	}
 	
 	public boolean getMatchesEverything() {
+		return false;
+	}
+	public boolean getNoAddress() {
 		return false;
 	}
 }

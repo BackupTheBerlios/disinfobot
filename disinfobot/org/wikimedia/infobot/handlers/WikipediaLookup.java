@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * $Id: WikipediaLookup.java,v 1.2 2004/12/20 07:28:26 kate Exp $
+ * $Id: WikipediaLookup.java,v 1.3 2004/12/21 11:12:02 kate Exp $
  */
 
 package org.wikimedia.infobot.handlers;
@@ -250,6 +250,7 @@ public class WikipediaLookup extends Handler {
 		//Infobot.logMsg("after taxobox: [" + reply.substring(0,500) + "]");
 		reply = reply.replaceAll("\\{\\|(.*?)\\|\\}", "");
 		//reply = reply.replaceAll("\\{\\{Taxobox[_ ]begin(.*?)Taxobox[ _]end\\}\\}", "");
+		reply = reply.replaceAll("\\[\\[[A-Za-z_-]+:([^|]+?)\\]\\]", "");
 		reply = reply.replaceAll("\\[\\[([^|]+?)\\]\\]", "$1");
 		reply = reply.replaceAll("\\[\\[([^|]+\\|)(.*?)\\]\\]", "$2");
 		//Infobot.logMsg("after tables/templates: [" + reply.substring(0,500) + "]");
@@ -262,6 +263,7 @@ public class WikipediaLookup extends Handler {
 		reply = reply.replaceAll("('''|</?[bB]>)", ""/*"\002"*/);
 		reply = reply.replaceAll("''", "");
 		reply = reply.replaceAll("</?[uU]>", ""/*"\007"*/);
+		reply = reply.replaceAll(" *==+ *([^=]+?) *==+ *", "\002$1:\002");
 		//Infobot.logMsg("after text weight: [" + reply.substring(0,500) + "]");
 		reply = replaceEntities(reply);
 		//Infobot.logMsg("after entities: [" + reply.substring(0,500) + "]");
@@ -270,6 +272,7 @@ public class WikipediaLookup extends Handler {
 		//	reply = reply.substring(0, end);
 		// join the rest together
 		reply = reply.replaceAll("\n", " ");
+		reply = reply.replaceAll(" +", " ");
 		String url = "http://"+host+"/wiki/" + URLEncoder.encode(qy.getRealTitle());
 		int maxlen = 400 - url.length();
 		if (reply.length() > maxlen)

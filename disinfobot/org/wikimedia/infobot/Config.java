@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * 
- * $Id: Config.java,v 1.1 2004/11/22 18:27:57 kate Exp $
+ * $Id: Config.java,v 1.2 2004/12/21 11:12:02 kate Exp $
  */
 
 package org.wikimedia.infobot;
@@ -193,7 +193,7 @@ public class Config {
 			if (servername == null)
 				throw new Exception("Server name not specified");
 			Infobot.logMsg("Server: " + servername + ":" + serverport);
-			servers.add(servername);
+			servers.add(new Server(servername, serverport));
 		}
 
 		NodeEnumeration confusers = conf.getValues("/infobot/users/user");
