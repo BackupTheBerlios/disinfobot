@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * 
- * $Id: PartHandler.java,v 1.2 2004/11/24 12:18:53 kate Exp $
+ * $Id: PartHandler.java,v 1.3 2004/11/30 02:11:11 kate Exp $
  */
 package org.wikimedia.infobot.irchandlers;
 
@@ -49,8 +49,9 @@ public class PartHandler extends IRCHandler {
 	}
 	
 	public void execute(IRCConnection server, ServerMessage msg) throws IOException {
+		String partmsg = (String) (msg.arguments.size() > 1 ? msg.arguments.get(1) : null);
 		SeenEntry s = new SeenEntry(SeenEntry.T_PART, null,
-				(String) msg.arguments.get(0), (String) msg.arguments.get(1));
+				(String) msg.arguments.get(0), partmsg);
 		Infobot.seends.storeItem(msg.prefix.getClient(), s);
 	}
 }
