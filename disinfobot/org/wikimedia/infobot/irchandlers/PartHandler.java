@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * 
- * $Id: PartHandler.java,v 1.1 2004/11/22 18:27:59 kate Exp $
+ * $Id: PartHandler.java,v 1.2 2004/11/24 12:18:53 kate Exp $
  */
 package org.wikimedia.infobot.irchandlers;
 
@@ -41,7 +41,7 @@ public class PartHandler extends IRCHandler {
 	 * 
 	 */
 	public static void install() throws SecurityException, NoSuchMethodException {
-		IRCHandler.addIRCHandler("PART", NickHandler.class);
+		IRCHandler.addIRCHandler("PART", PartHandler.class);
 	}
 
 	public PartHandler(ServerMessage msg, IRCConnection server) {

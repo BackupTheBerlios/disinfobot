@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * 
- * $Id: FactoidDataStore.java,v 1.1 2004/11/22 18:27:57 kate Exp $
+ * $Id: FactoidDataStore.java,v 1.2 2004/11/24 12:18:53 kate Exp $
  */
 package org.wikimedia.infobot;
 
@@ -164,6 +164,9 @@ public class FactoidDataStore extends DataStore {
 			Infobot.logStackTrace(e);
 			return null;
 		} catch (PatternSyntaxException pse) {
+			if (cursor != null)
+				try { cursor.close(); } catch (Exception q) {}
+			cursor = null;
 			throw pse;
 		} finally {
 			if (cursor != null) {

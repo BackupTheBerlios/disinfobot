@@ -1,5 +1,5 @@
 <!--
- $Id: infobot.xml.example,v 1.4 2004/11/22 20:16:16 kate Exp $
+ $Id: infobot.xml.example,v 1.5 2004/11/24 12:18:53 kate Exp $
   
  This is an example configuration file for disinfobot.
  Copy it to infobot.xml and edit as needed.
@@ -81,5 +81,8 @@
 		<!-- You probably don't want to disable any of these. -->
 		<irchandler>org.wikimedia.infobot.irchandlers.WelcomeHandler</irchandler>
 		<irchandler>org.wikimedia.infobot.irchandlers.PrivmsgHandler</irchandler>
+		<irchandler>org.wikimedia.infobot.irchandlers.JoinHandler</irchandler>
+		<irchandler>org.wikimedia.infobot.irchandlers.PartHandler</irchandler>
+		<irchandler>org.wikimedia.infobot.irchandlers.QuitHandler</irchandler>
 	</irchandlers>
 </infobot>

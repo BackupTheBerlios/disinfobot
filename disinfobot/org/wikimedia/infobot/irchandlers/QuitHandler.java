@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * 
- * $Id: QuitHandler.java,v 1.1 2004/11/22 18:27:59 kate Exp $
+ * $Id: QuitHandler.java,v 1.2 2004/11/24 12:18:53 kate Exp $
  */
 package org.wikimedia.infobot.irchandlers;
 
@@ -41,7 +41,7 @@ public class QuitHandler extends IRCHandler {
 	 * 
 	 */
 	public static void install() throws SecurityException, NoSuchMethodException {
-		IRCHandler.addIRCHandler("QUIT", NickHandler.class);
+		IRCHandler.addIRCHandler("QUIT", QuitHandler.class);
 	}
 
 	public QuitHandler(ServerMessage msg, IRCConnection server) {

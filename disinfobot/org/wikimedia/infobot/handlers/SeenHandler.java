@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * 
- * $Id: SeenHandler.java,v 1.1 2004/11/22 18:27:58 kate Exp $
+ * $Id: SeenHandler.java,v 1.2 2004/11/24 12:18:53 kate Exp $
  */
 package org.wikimedia.infobot.handlers;
 
@@ -49,7 +49,7 @@ public class SeenHandler extends Handler {
 			return true;
 		
 		String nick = m.prefix.getClient();
-		String target = mat.group(1);
+		String target = mat.group(1).trim();
 		
 		SeenEntry e = Infobot.seends.getItem(target);
 		if (e == null) {
