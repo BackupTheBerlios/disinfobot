@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * $Id: ServerConnection.java,v 1.1 2004/11/22 18:27:59 kate Exp $
+ * $Id: ServerConnection.java,v 1.2 2004/11/23 16:13:51 kate Exp $
  */
 
 package org.wikimedia.infobot.irc;
@@ -80,6 +80,9 @@ public class ServerConnection {
 			}
 			default: {
 				s += c;
+				if (s.length() > 512) {
+					throw new IOException("Line from server too long!");
+				}
 				continue;
 			}
 			}
