@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * $Id: WpSpeedHandler.java,v 1.2 2004/11/22 20:16:16 kate Exp $
+ * $Id: WpSpeedHandler.java,v 1.3 2004/11/23 18:09:49 kate Exp $
  */
 
 package org.wikimedia.infobot.handlers;
@@ -29,7 +29,6 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
