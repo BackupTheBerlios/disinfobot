@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * $Id: ServerMessage.java,v 1.1 2004/11/22 18:27:59 kate Exp $
+ * $Id: ServerMessage.java,v 1.2 2004/12/20 07:28:26 kate Exp $
  */
 
 package org.wikimedia.infobot.irc;
@@ -47,6 +47,8 @@ public class ServerMessage {
 	public String			replyTo;
 	private IRCConnection	server;
 	public String			target;
+	
+	public boolean 			prv;
 	
 	public ServerMessage(IRCConnection server, String text) {
 		this.text = text;
@@ -81,10 +83,13 @@ public class ServerMessage {
 		
 		if (type == T_PRIVMSG || type == T_NOTICE) {
 			target = (String) arguments.get(0);
-			if (target.charAt(0) == '#' || target.charAt(0) == '+')
+			if (target.charAt(0) == '#' || target.charAt(0) == '+') {
+				prv = false;
 				replyTo = target;
-			else
+			} else {
 				replyTo = prefix.getClient();
+				prv = true;
+			}
 		}
 
 		if (type == T_PRIVMSG) {

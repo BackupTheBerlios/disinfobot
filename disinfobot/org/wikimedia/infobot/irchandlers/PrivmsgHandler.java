@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * $Id: PrivmsgHandler.java,v 1.1 2004/11/22 18:27:59 kate Exp $
+ * $Id: PrivmsgHandler.java,v 1.2 2004/12/20 07:28:26 kate Exp $
  */
 
 package org.wikimedia.infobot.irchandlers;
@@ -61,12 +61,14 @@ public class PrivmsgHandler extends IRCHandler {
 	 * @see org.wikimedia.infobot.irchandlers.IRCHandler#execute(infobot.ServerConnection, infobot.ServerMessage)
 	 */
 	public void execute(IRCConnection server, ServerMessage msg) throws IOException {
-		SeenEntry s = new SeenEntry(SeenEntry.T_PUBLIC, null,
-				msg.target, (String) msg.arguments.get(1));
-		Infobot.seends.storeItem(msg.prefix.getClient(), s);
+		if (!msg.prv) {
+			SeenEntry s = new SeenEntry(SeenEntry.T_PUBLIC, null,
+					msg.target, (String) msg.arguments.get(1));
+			Infobot.seends.storeItem(msg.prefix.getClient(), s);
+		}
 		
 		String nick = server.getCurrentNickname();
-		String matchme = "^" + nick + "[,:> ]+(.*?)$";
+		String matchme = "^" + (msg.prv?"":(nick + "[,:> ]+"))+"(.*?)$";
 		Pattern p = Pattern.compile(matchme);
 		Matcher mat = p.matcher((String) msg.arguments.get(1));
 

@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * $Id: WikipediaLookup.java,v 1.1 2004/12/12 21:09:31 kate Exp $
+ * $Id: WikipediaLookup.java,v 1.2 2004/12/20 07:28:26 kate Exp $
  */
 
 package org.wikimedia.infobot.handlers;
@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.nfunk.jep.EvaluatorVisitor;
 import org.w3c.dom.Node;
 import org.wikimedia.infobot.Infobot;
 import org.wikimedia.infobot.User;
@@ -54,6 +55,69 @@ import com.icl.saxon.om.NodeInfo;
  *
  */
 public class WikipediaLookup extends Handler {
+	public static class WpQuery {
+		String realtitle = "";
+
+		public String getRealTitle() {
+			return realtitle;
+		}
+		public String fetchWpArticle(ServerMessage m, String nick, 
+				String host, String name) throws IOException {
+			String urlstr = "http://"+host+"/wiki/Special:Export/"
+				+ URLEncoder.encode(name, "ISO-8859-1");
+			URL url = new URL(urlstr);
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setUseCaches(false);
+			conn.setInstanceFollowRedirects(false);
+			conn.setRequestProperty("User-Agent", 
+					"Wikipedia-Java-Infobot/" + Infobot.version + " (contact: kate.turner@gmail.com)");
+			conn.connect();
+			int i = conn.getResponseCode();
+			if (i == 301 || i == 302) {
+				String newurl = conn.getHeaderField("Location");
+				url = new URL(newurl);
+				conn = (HttpURLConnection) url.openConnection();
+				conn.setUseCaches(false);
+				conn.setInstanceFollowRedirects(false);
+				conn.setRequestProperty("User-Agent", 
+						"Wikipedia-Java-Infobot/" + Infobot.version + " (contact: kate.turner@gmail.com)");
+				conn.connect();	
+				i = conn.getResponseCode();
+			}
+			if (i != 200) {
+				m.replyChannel("sorry " + nick + ", there seems to have been an error: "
+						+ i + " " + conn.getResponseMessage());
+				return null;
+			}
+			DataInputStream dis = new DataInputStream(new BufferedInputStream(conn.getInputStream()));
+			String articletext;
+			StandaloneContext standaloneContext;
+			Context context;
+			try {
+				DocumentBuilderFactory factory = new com.icl.saxon.om.DocumentBuilderFactoryImpl();
+				DocumentBuilder builder = factory.newDocumentBuilder();
+				InputSource inputSrc = new InputSource(dis);
+				Node xmlDoc = builder.parse(inputSrc);
+				NodeInfo nodeInfo = (NodeInfo) xmlDoc;
+				context = new Context();
+				context.setContextNode(nodeInfo);
+				DocumentInfo docInfo = nodeInfo.getDocumentRoot();
+				NamePool namePool = docInfo.getNamePool();
+				standaloneContext = new StandaloneContext(namePool);
+				articletext = Expression.make("/mediawiki/page/revision/text", 
+						standaloneContext).evaluateAsString(context);
+				realtitle = Expression.make("/mediawiki/page/title",
+						standaloneContext).evaluateAsString(context);
+			} catch (Exception e) {
+				m.replyChannel("sorry " + nick + ", there seems to have been an error:"
+						+ e.getMessage());
+				return null;
+			}
+			dis.close();
+			return articletext;
+		}
+	}
+	
 	public boolean execute(ServerMessage m, User u, String command) throws IOException {
 		Pattern p = Pattern.compile("^(what *is) +(.*?) *\\??$");
 		Matcher mat = p.matcher(command);
@@ -64,101 +128,154 @@ public class WikipediaLookup extends Handler {
 		if (!checkPriv(m, u, 'q'))
 			return true;
 		
+		String trail = ".wikipedia.org";
+		String host = "en";
+
 		String nick = m.prefix.getClient();
 		String target = nick;
 		String articlename = mat.group(2);
-		String urlstr = "http://en.wikipedia.org/wiki/Special:Export/"
-			+ URLEncoder.encode(articlename, "ISO-8859-1");
-		URL url = new URL(urlstr);
-		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-		conn.setUseCaches(false);
-		conn.setInstanceFollowRedirects(false);
-		conn.setRequestProperty("User-Agent", 
-				"Wikipedia-Java-Infobot/" + Infobot.version + " (contact: kate.turner@gmail.com)");
-		conn.connect();
-		int i = conn.getResponseCode();
-		if (i == 301 || i == 302) {
-			String newurl = conn.getHeaderField("Location");
-			url = new URL(newurl);
-			conn = (HttpURLConnection) url.openConnection();
-			conn.setUseCaches(false);
-			conn.setInstanceFollowRedirects(false);
-			conn.setRequestProperty("User-Agent", 
-					"Wikipedia-Java-Infobot/" + Infobot.version + " (contact: kate.turner@gmail.com)");
-			conn.connect();	
-			i = conn.getResponseCode();
+		p = Pattern.compile("^([a-z-]+):.*");
+		mat = p.matcher(articlename);
+		if (mat.find()) {
+			host = mat.group(1);
+			articlename = articlename.replaceAll("^([a-z-]+):", "");
 		}
-		if (i != 200) {
-			m.replyChannel("sorry " + nick + ", there seems to have been an error: "
-					+ i + " " + conn.getResponseMessage());
+		host = host + trail;
+		WpQuery qy = new WpQuery();
+		String articletext = qy.fetchWpArticle(m, nick, host, articlename);
+		if (articletext == null)
 			return true;
+		p = Pattern.compile("^#[rR][eE][dD][iI][rR][eE][cC][tT] *\\[\\[([^]]*)\\]\\].*");
+		mat = p.matcher(articletext);
+		if (mat.find()) {
+			articlename = mat.group(1);
+			articletext = qy.fetchWpArticle(m, nick, host, articlename);
+			if (articletext == null)
+				return true;
 		}
-		p = Pattern.compile("(Served by [^ ]+ in [^ ]+ secs)");
-		DataInputStream dis = new DataInputStream(new BufferedInputStream(conn.getInputStream()));
-		String articletext;
-		StandaloneContext standaloneContext;
-		Context context;
-		try {
-	        DocumentBuilderFactory factory = new com.icl.saxon.om.DocumentBuilderFactoryImpl();
-			DocumentBuilder builder = factory.newDocumentBuilder();
-	        InputSource inputSrc = new InputSource(dis);
-	        Node xmlDoc = builder.parse(inputSrc);
-	        NodeInfo nodeInfo = (NodeInfo) xmlDoc;
-	        context = new Context();
-	        context.setContextNode(nodeInfo);
-	        DocumentInfo docInfo = nodeInfo.getDocumentRoot();
-	        NamePool namePool = docInfo.getNamePool();
-	        standaloneContext = new StandaloneContext(namePool);
-			Expression expr = Expression.make("/mediawiki/page/revision/text", 
-					standaloneContext);
-			articletext = expr.evaluateAsString(context);
-		} catch (Exception e) {
-			m.replyChannel("sorry " + nick + ", there seems to have been an error:"
-					+ e.getMessage());
-			return true;
-		}
-		dis.close();
-
-		Infobot.logMsg("text: [" + articletext + "]");
+		//Infobot.logMsg("text: [" + articletext + "]");
 		if (articletext.trim().length() == 0) {
 			m.replyChannel("sorry " + nick + ", I don't know what " + articlename
 					+ " is.");
 			return true;
 		}
+		articletext = new String(articletext.getBytes("UTF-8"), "ISO-8859-1");
+		if (articletext.indexOf("{{disambig}}") != -1) {
+			String[] links = articletext.split("\\[\\[");
+			String result = "";
+			for (int i = 0; i < links.length; ++i) {
+				int j = links[i].indexOf("]]");
+				if (j == -1)
+					continue;
+				links[i] = links[i].substring(0, j);
+				if (links[i].startsWith("Category"))
+					continue;
+				if (links[i].indexOf(":") != -1)
+					continue;
+				int pipe = links[i].indexOf("|");
+				String link = links[i];
+				if (pipe != -1)
+					link = links[i].substring(0, pipe);
+				result += ('"'+link+'"'+", ");
+			}
+			result = result.substring(0, result.length() - 2);
+			m.replyChannel(nick + ", " + articlename + " is a disambiguation page. " +
+					"It contains the following links: " + result);
+			return true;
+		}
 		
 		// remove comments
-		articletext = articletext.replaceAll("<!--(.*?)-->", "");
+		//articletext = articletext.replaceAll("<!--(.*?)-->", "");
 		// remove links
-		articletext = articletext.replaceAll(
-				"\\[\\[(Image|Media):([^|]*?)(\\|.*?)?\\]\\]", "");
+		int i = 0, j, k;
+		i = articletext.indexOf("[[Image:");
+		if (i == -1) i = articletext.indexOf("[[image:");
+		int l = i;
+		while (i > -1) {
+			//i = articletext.indexOf("[[", i);
+			//if (l == -1) l = i;
+			//if (i == -1) break;
+			j = articletext.indexOf("[[", i + 2);
+			k = articletext.indexOf("]]", i + 2);
+			Infobot.logMsg("image find: j="+j+" k="+k);
+			if (j != -1 && j < k && k > -1) {
+				i = k;
+				continue;
+			} else {
+				Infobot.logMsg("image part: [" + articletext.substring(l, k) + "]");
+				if (k == -1)
+					articletext = articletext.substring(0, l);
+				else
+					articletext = articletext.substring(0, l) + 
+						articletext.substring(k + 2);
+				i = articletext.indexOf("[[Image:");
+				if (i == -1) i = articletext.indexOf("[[image:");		
+				l = i;
+			}
+		}
+		//articletext = articletext.replaceAll(
+		//		"\\[\\[([iI]mage|[mM]edia):.*?(\\[\\[.*?(\\|.*?)\\]\\]){0,}\\]\\]", "");
 		// trim
 		articletext = articletext.trim();
 		// take the first line
 		String reply = articletext;
-		Infobot.logMsg("reply: [" + reply + "]");
+		//Infobot.logMsg("reply: [" + reply.substring(0,500) + "]");
 		// formatting
-		int j;
+		while ((i = reply.indexOf("<!--")) != -1) {
+			if ((j = reply.indexOf("-->")) == -1)
+				break;
+			reply = reply.substring(0, i) + reply.substring(j + 4);
+		}
 		while ((i = reply.indexOf("{{Taxobox_begin")) != -1) {
-			if ((j = reply.indexOf("Taxobox_end}}")) == -1)
+			if ((j = reply.indexOf("Taxobox_end}}, i")) == -1)
 				break;
 			reply = reply.substring(0, i) + reply.substring(j + 13);
 		}
+		reply = reply.replaceAll(" *\\{\\{+([^}]*?)\\}\\}+ *", "");
+		while ((i = reply.indexOf("{{")) != -1) {
+			if ((j = reply.indexOf("}}", i)) == -1)
+				break;
+			reply = reply.substring(0, i) + reply.substring(j + 3);
+		}
+		while ((i = reply.indexOf("{|")) != -1) {
+			if ((j = reply.indexOf("|}", i)) == -1)
+				break;
+			reply = reply.substring(0, i) + reply.substring(j + 3);
+		}
+		while ((i = reply.indexOf("<table")) != -1) {
+			if ((j = reply.indexOf("</table>", i)) == -1)
+				break;
+			reply = reply.substring(0, i) + reply.substring(j + 8);
+		}
+		//Infobot.logMsg("after taxobox: [" + reply.substring(0,500) + "]");
 		reply = reply.replaceAll("\\{\\|(.*?)\\|\\}", "");
 		//reply = reply.replaceAll("\\{\\{Taxobox[_ ]begin(.*?)Taxobox[ _]end\\}\\}", "");
-		reply = reply.replaceAll("\\{\\{+(.*?)\\}\\}+", "");
 		reply = reply.replaceAll("\\[\\[([^|]+?)\\]\\]", "$1");
 		reply = reply.replaceAll("\\[\\[([^|]+\\|)(.*?)\\]\\]", "$2");
+		//Infobot.logMsg("after tables/templates: [" + reply.substring(0,500) + "]");
+		// any lines starting with '' are probably disambig
+		reply = reply.replaceAll("(^|\n):*''[^'].*\n", "");
+		reply = reply.replaceAll("^----.*", "");
 		reply = reply.trim();
+		//Infobot.logMsg("after trim: [" + reply.substring(0,500) + "]");
 		reply = reply.replaceAll("'''''", ""/*"\002"*/);
 		reply = reply.replaceAll("('''|</?[bB]>)", ""/*"\002"*/);
 		reply = reply.replaceAll("''", "");
 		reply = reply.replaceAll("</?[uU]>", ""/*"\007"*/);
+		//Infobot.logMsg("after text weight: [" + reply.substring(0,500) + "]");
 		reply = replaceEntities(reply);
-		int end = reply.indexOf('\n');
-		if (end > -1)
-			reply = reply.substring(0, end);
-		if (reply.length() > 400)
-			reply = reply.substring(0, 400) + "...";
+		//Infobot.logMsg("after entities: [" + reply.substring(0,500) + "]");
+		//int end = reply.indexOf('\n');
+		//if (end > -1)
+		//	reply = reply.substring(0, end);
+		// join the rest together
+		reply = reply.replaceAll("\n", " ");
+		String url = "http://"+host+"/wiki/" + URLEncoder.encode(qy.getRealTitle());
+		int maxlen = 400 - url.length();
+		if (reply.length() > maxlen)
+			reply = reply.substring(0, maxlen) + "...";
+		reply += " [" + url + "]";
+		Infobot.logMsg("Sending reply: [" + reply + "]");
 		m.replyChannel(nick + ", " + reply);
 		return true;
 	}
@@ -428,25 +545,39 @@ public class WikipediaLookup extends Handler {
 			{"diams", "9830"},
 	};
 	
+
 	public static String replaceEntities(String s) {
-		int i, j;
-		while ((i = s.indexOf("&")) != -1) {
+		int i = 0, j;
+		//System.out.println("Doing entities for: [" + s + "]");
+		while ((i = s.indexOf("&", i)) != -1) {
+			++i;
 			j = s.indexOf(";", i);
 			if (j == -1)
 				break;
-			if ((j - i) > 7)
+			//System.out.println("Found entity at "+i+".."+j+"=[" + s.substring(i,j) + "]");
+			if ((j - i) > 10)
 				continue;
-			String entity = s.substring(i + 1, j);
-			if (entity.matches("^[0-9]+$")) {
-				s = s.substring(0, i) + 
-					(char)(Integer.valueOf(entity).intValue()) +
-					s.substring(j + 1);
+			String entity = s.substring(i, j);
+			if (entity.matches("^#x?[0-9]+$")) {
+				int entnum;
+				if (entity.charAt(1) == 'x')
+					entnum = Integer.valueOf(entity.substring(2), 16).intValue();
+				else
+					entnum = Integer.valueOf(entity.substring(1), 10).intValue();
+				s = s.substring(0, i - 1) + (char)entnum + s.substring(j + 1);
 			} else {
+				boolean found = false;
 				for (int q = 0; q < htmlentities.length; ++q)
-					if (entity.equals(htmlentities[q][0]))
-						s = s.substring(0, i) + 
+					if (entity.equals(htmlentities[q][0])) {
+						System.out.println("match: " + htmlentities[q][0]);
+						s = s.substring(0, i - 1) +
 						(char)(Integer.valueOf(htmlentities[q][1]).intValue())
-						+ s.substring(j + 1);						
+						+ s.substring(j + 1);
+						found = true;
+						break;
+					}
+				if (!found)
+					s = s.substring(0, i - 1) + s.substring(j + 1);
 			}
 			i -= (j - i);
 		}

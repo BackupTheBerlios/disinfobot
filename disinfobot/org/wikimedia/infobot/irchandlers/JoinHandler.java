@@ -19,14 +19,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * 
- * $Id: JoinHandler.java,v 1.2 2004/11/24 12:18:53 kate Exp $
+ * $Id: JoinHandler.java,v 1.3 2004/12/20 07:28:26 kate Exp $
  */
 package org.wikimedia.infobot.irchandlers;
 
 import java.io.IOException;
 
+import org.wikimedia.infobot.Factoid;
 import org.wikimedia.infobot.Infobot;
 import org.wikimedia.infobot.SeenEntry;
+import org.wikimedia.infobot.User;
 import org.wikimedia.infobot.irc.IRCConnection;
 import org.wikimedia.infobot.irc.ServerMessage;
 
@@ -52,5 +54,16 @@ public class JoinHandler extends IRCHandler {
 		SeenEntry s = new SeenEntry(SeenEntry.T_JOIN, null,
 				(String) msg.arguments.get(0), null);
 		Infobot.seends.storeItem(msg.prefix.getClient(), s);
+		Infobot.logMsg("join handler for [" + msg.prefix.getPrefix() + "]");
+		User u = User.findByHost(msg.prefix.getPrefix());
+		if (u.isAnonymous())
+			return;
+		Infobot.logMsg("got user="+u.getNickname());
+		Factoid f = Infobot.ds.getItem(u.getNickname());
+		if (f == null)
+			return;
+		Infobot.logMsg("got factoid");
+		server.privmsg((String)msg.arguments.get(0), 
+				"[" + msg.prefix.getClient() + "] " + f.getText());
 	}
 }

@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * 
- * $Id: DataStore.java,v 1.1 2004/11/22 18:27:57 kate Exp $
+ * $Id: DataStore.java,v 1.2 2004/12/20 07:28:26 kate Exp $
  */
 
 package org.wikimedia.infobot;
@@ -76,12 +76,21 @@ public abstract class DataStore {
 	}
 
 	public void storeItem(String key, Object value, Class type) {
+		DatabaseEntry dbkey;
+		DatabaseEntry data;
+		EntryBinding binding;
+		Transaction txn;
+		
 		try {
-			DatabaseEntry dbkey = new DatabaseEntry(key.getBytes("UTF-8"));
-			DatabaseEntry data = new DatabaseEntry();
-			EntryBinding binding = new SerialBinding(catalog, type);
+			dbkey = new DatabaseEntry(key.getBytes("UTF-8"));
+			data = new DatabaseEntry();
+			binding = new SerialBinding(catalog, type);
 			binding.objectToEntry(value, data);
-			db.put(null, dbkey, data);
+			txn = dbenv.beginTransaction(null, null);
+			txn.setName("DataStore.storeItem for key=["+key+"] value=["
+					+ value.toString() + "] type=" + type.toString());
+			db.put(txn, dbkey, data);
+			txn.commit();
 		} catch (RuntimeExceptionWrapper e) {
 			Infobot.logMsg("Unexpected runtime exception writing database entry");
 			Infobot.logStackTrace(e);
@@ -94,10 +103,15 @@ public abstract class DataStore {
 	}
 	
 	public Object getItem(String key, Class type) {
+		Transaction txn;
 		try {
 			DatabaseEntry dbkey = new DatabaseEntry(key.getBytes("UTF-8"));
 			DatabaseEntry data = new DatabaseEntry();
-			OperationStatus status = db.get(null, dbkey, data, LockMode.DEFAULT);
+			txn = dbenv.beginTransaction(null, null);
+			txn.setName("DataStore.getItem for key=["+key+"] type="
+					+ type.toString());
+			OperationStatus status = db.get(txn, dbkey, data, LockMode.DEFAULT);
+			txn.commit();
 			if (status == OperationStatus.NOTFOUND)
 				return null;
 			EntryBinding binding = new SerialBinding(catalog, type);
@@ -110,9 +124,13 @@ public abstract class DataStore {
 	}
 	
 	public void eraseItem(String key) {
+		Transaction txn;
 		try {
 			DatabaseEntry dbkey = new DatabaseEntry(key.getBytes("UTF-8"));
-			OperationStatus status = db.delete(null, dbkey);
+			txn = dbenv.beginTransaction(null, null);
+			txn.setName("DataStore.eraseItem for key=["+key+"]");
+			OperationStatus status = db.delete(txn, dbkey);
+			txn.commit();
 		} catch (Exception e) {
 			Infobot.logMsg("Unexpected exception while removing database entry");
 			Infobot.logStackTrace(e);
@@ -120,10 +138,14 @@ public abstract class DataStore {
 	}
 	
 	public boolean keyExists(String key) {
+		Transaction txn;
 		try {
 			DatabaseEntry dbkey = new DatabaseEntry(key.getBytes("UTF-8"));
 			DatabaseEntry data = new DatabaseEntry();
-			OperationStatus status = db.get(null, dbkey, data, LockMode.DEFAULT);
+			txn = dbenv.beginTransaction(null, null);
+			txn.setName("DataStore.keyExists for key=["+key+"]");
+			OperationStatus status = db.get(txn, dbkey, data, LockMode.DEFAULT);
+			txn.commit();
 			if (status == OperationStatus.NOTFOUND)
 				return false;
 			return true;
@@ -140,7 +162,7 @@ public abstract class DataStore {
 			BtreeStats stats = (BtreeStats) db.getStats(s);
 			return (int) stats.getLeafNodeCount();
 		} catch (Exception e) {
-			Infobot.logMsg("Unexpected exception reading database");
+			Infobot.logMsg("Unexpected exception reading number of keys");
 			Infobot.logStackTrace(e);
 			return 0;
 		}
